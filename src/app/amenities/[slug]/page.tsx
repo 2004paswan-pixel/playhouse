@@ -1,0 +1,335 @@
+"use client";
+
+import { use, useState } from "react";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, X, Dumbbell, Music, Footprints, CircleDot, Flame, CalendarDays, Plus } from "lucide-react";
+import Header from "@/components/Header";
+import Avatar from "@/components/Avatar";
+import { AMENITIES, isPeak } from "@/lib/amenities-data";
+import { useBookings, CURRENT_USER } from "@/lib/bookings-context";
+import { Amenity, TimeSlot, slotStatus } from "@/lib/types";
+
+const ICONS: Record<string, typeof Dumbbell> = {
+  gym: Dumbbell,
+  "music-room-1": Music,
+  "music-room-2": Music,
+  "dance-room": Footprints,
+  "pickleball-court": CircleDot,
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  free: "Free",
+  waiting: "Waitlist open",
+  full: "Full",
+};
+
+// Only one color carries meaning: green = available. Everything else is
+// deliberately dull — the waiting count is written out as text instead.
+const STATUS_CELL: Record<string, string> = {
+  free: "bg-success/10 text-success",
+  waiting: "bg-surface text-muted",
+  full: "bg-surface text-muted",
+};
+
+export default function AmenityPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
+  const amenity = AMENITIES.find((a) => a.id === slug);
+  if (!amenity) notFound();
+  const Icon = ICONS[amenity.id] ?? Dumbbell;
+
+  const { getSlots } = useBookings();
+  const slots = getSlots(slug);
+  const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
+  const activeSlot = slots.find((s) => s.id === activeSlotId) ?? null;
+  const today = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  return (
+    <div className="relative flex min-h-screen flex-col text-foreground">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-32 left-1/4 h-80 w-80 rounded-full bg-accent/10 blur-[110px]" />
+        <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-accent/5 blur-[100px]" />
+      </div>
+
+      <Header xp={100} />
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-6">
+        <Link
+          href="/"
+          className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+        >
+          <ArrowLeft size={14} />
+          All amenities
+        </Link>
+
+        {/* Room hero */}
+        <div className="relative mb-4 flex h-36 items-end overflow-hidden rounded-lg border border-border bg-gradient-to-br from-surface-2 to-surface">
+          {amenity.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={amenity.image}
+              alt={amenity.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <Icon size={72} className="absolute -right-2 -top-2 text-foreground/5" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+          <div className="relative z-10 flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-black/40 text-accent backdrop-blur-sm">
+              <Icon size={20} />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl italic leading-tight">{amenity.name}</h1>
+              <p className="text-xs text-muted">
+                {amenity.bookingType === "individual"
+                  ? `${amenity.capacityPerSlot} spots per 30-min slot · waitlist up to ${amenity.waitlistCap}`
+                  : `One group per 30-min slot · up to ${amenity.groupSize} people`}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Date + legend */}
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold leading-none">
+            <CalendarDays size={15} className="text-accent" />
+            {today}
+          </h2>
+          <div className="flex items-center gap-3 text-[11px] leading-none text-muted">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-sm bg-success/60" /> Available
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-sm bg-surface-2 border border-border" /> Unavailable
+            </span>
+            <span className="flex items-center gap-1">
+              <Flame size={11} className="text-danger" /> Peak
+            </span>
+          </div>
+        </div>
+
+        {/* Continuous day calendar — 06:00 to 22:00, 32 slots, own card per slot */}
+        <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8">
+          {slots.map((slot) => {
+            const status = slotStatus(slot);
+            const mine = slot.bookings.some((b) => b.name === CURRENT_USER);
+            const peak = isPeak(slot.start);
+            const waitingCount = slot.bookings.filter((b) => b.status === "waiting").length;
+
+            return (
+              <button
+                key={slot.id}
+                onClick={() => setActiveSlotId(slot.id)}
+                title={`${slot.start}–${slot.end} · ${STATUS_LABEL[status]}`}
+                className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border border-border text-center shadow-sm transition-transform hover:-translate-y-0.5 hover:border-accent/50 ${STATUS_CELL[status]} ${
+                  mine ? "ring-2 ring-inset ring-accent" : ""
+                }`}
+              >
+                {peak && (
+                  <Flame size={8} className="absolute right-1 top-1 text-danger opacity-90" />
+                )}
+                <span className="font-mono-tight text-[11px] font-medium leading-none">
+                  {slot.start}
+                </span>
+                {waitingCount > 0 && (
+                  <span className="text-[9px] leading-none opacity-90">
+                    {waitingCount}
+                    {amenity.waitlistCap != null && `/${amenity.waitlistCap}`} waiting
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </main>
+
+      {activeSlot && (
+        <SlotDetail
+          slot={activeSlot}
+          amenity={amenity}
+          onClose={() => setActiveSlotId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function SlotDetail({
+  slot,
+  amenity,
+  onClose,
+}: {
+  slot: TimeSlot;
+  amenity: Amenity;
+  onClose: () => void;
+}) {
+  const { book, cancel, addGuest, removeGuest } = useBookings();
+  const [guestInput, setGuestInput] = useState("");
+  const status = slotStatus(slot);
+  const confirmed = slot.bookings.filter((b) => b.status === "confirmed");
+  const waitlisted = slot.bookings.filter((b) => b.status === "waiting");
+  const mine = slot.bookings.find((b) => b.name === CURRENT_USER);
+  const isGroup = amenity.bookingType === "group";
+  const waitlistFull =
+    amenity.waitlistCap != null && waitlisted.length >= amenity.waitlistCap && !mine;
+
+  function handleBook() {
+    const ok = book(amenity.id, slot.id);
+    if (!ok) return; // waitlist was full — button is disabled anyway
+  }
+
+  function handleAddGuest() {
+    if (!guestInput.trim()) return;
+    addGuest(amenity.id, slot.id, guestInput.trim());
+    setGuestInput("");
+  }
+
+  const maxGuests = (amenity.groupSize ?? 1) - 1;
+  const myGuests = mine?.guests ?? [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="scroll-list max-h-[85vh] w-full max-w-sm overflow-y-auto rounded-lg border border-border bg-surface p-5">
+        <div className="mb-3 flex items-start justify-between">
+          <div>
+            <h3 className="font-display text-lg italic leading-tight">
+              {amenity.name} &middot; {slot.start}–{slot.end}
+            </h3>
+            <p className="text-xs text-muted">
+              {isGroup
+                ? confirmed.length > 0
+                  ? "Room booked"
+                  : "Room free"
+                : `${confirmed.length}/${slot.capacity} joined`}
+              {waitlisted.length > 0 &&
+                ` · ${waitlisted.length}${amenity.waitlistCap != null ? `/${amenity.waitlistCap}` : ""} waitlisted`}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-muted hover:text-foreground">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="mb-4 flex flex-col gap-4">
+          {/* Confirmed / group section */}
+          <div>
+            <p className="mb-1.5 text-xs font-medium uppercase text-muted">
+              {isGroup ? "In this session" : "Joined"}
+            </p>
+            {confirmed.length === 0 ? (
+              <p className="text-sm text-muted">No one yet — be the first.</p>
+            ) : (
+              <ul className="scroll-list flex max-h-44 flex-col gap-2 pr-1">
+                {confirmed.map((b, i) => (
+                  <li key={i} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={b.name} />
+                      <span className="text-sm">
+                        {b.name}
+                        {b.name === CURRENT_USER && (
+                          <span className="ml-1 text-xs text-accent">(you)</span>
+                        )}
+                        {isGroup && (
+                          <span className="ml-1 text-xs text-muted">&middot; booked this</span>
+                        )}
+                      </span>
+                    </div>
+                    {isGroup && b.guests && b.guests.length > 0 && (
+                      <ul className="ml-8 flex flex-col gap-1.5">
+                        {b.guests.map((g, gi) => (
+                          <li key={gi} className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-2.5">
+                              <Avatar name={g} size={22} />
+                              <span className="text-sm text-muted">{g}</span>
+                            </span>
+                            {b.name === CURRENT_USER && (
+                              <button
+                                onClick={() => removeGuest(amenity.id, slot.id, gi)}
+                                className="text-muted hover:text-danger"
+                              >
+                                <X size={13} />
+                              </button>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Add-member UI: only for the group booker, only if room left */}
+            {isGroup && mine?.status === "confirmed" && myGuests.length < maxGuests && (
+              <div className="mt-2.5 flex items-center gap-1.5">
+                <input
+                  value={guestInput}
+                  onChange={(e) => setGuestInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddGuest()}
+                  placeholder={`Add member (${myGuests.length}/${maxGuests})`}
+                  className="min-w-0 flex-1 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-sm outline-none focus:border-accent"
+                />
+                <button
+                  onClick={handleAddGuest}
+                  className="flex shrink-0 items-center justify-center rounded-md bg-accent p-1.5 text-accent-foreground hover:opacity-90"
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {waitlisted.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-xs font-medium uppercase text-muted">Waitlisted</p>
+              <ul className="scroll-list flex max-h-32 flex-col gap-2 pr-1">
+                {waitlisted.map((b, i) => (
+                  <li key={i} className="flex items-center gap-2.5">
+                    <Avatar name={b.name} />
+                    <span className="text-sm">
+                      {b.name}
+                      {b.name === CURRENT_USER && (
+                        <span className="ml-1 text-xs text-accent">(you)</span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {mine ? (
+          <button
+            onClick={() => cancel(amenity.id, slot.id)}
+            className="w-full rounded-md border border-danger/40 py-2 text-sm font-medium text-danger hover:bg-danger/10"
+          >
+            {mine.status === "confirmed" ? "Cancel booking" : "Leave waitlist"}
+          </button>
+        ) : waitlistFull ? (
+          <button
+            disabled
+            className="w-full cursor-not-allowed rounded-md border border-border py-2 text-sm font-medium text-muted"
+          >
+            Waitlist full
+          </button>
+        ) : (
+          <button
+            onClick={handleBook}
+            className="w-full rounded-md bg-accent py-2 text-sm font-semibold text-accent-foreground hover:opacity-90"
+          >
+            {status === "free" ? "Book this slot" : "Join waitlist"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

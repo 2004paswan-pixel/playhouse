@@ -1,46 +1,46 @@
 export type SlotStatus = "free" | "waiting" | "full";
 
-export interface Slot {
-  id: string;
-  label: string;
-  start_time: string; // "06:00"
-  end_time: string; // "09:00"
-  is_peak: boolean;
-  capacity: number;
-  booked_count: number;
-  waiting_count: number;
-}
+export type BookingType = "individual" | "group";
 
-export interface Profile {
+export interface Amenity {
   id: string;
   name: string;
-  email: string;
-  campus: string;
-  avatar_url?: string;
-  credits: number;
+  size: "large" | "small";
+  /** Path under /public once a real room photo is dropped in, e.g. "/rooms/gym.jpg" */
+  image: string | null;
+  bookingType: BookingType;
+  /**
+   * "individual" (e.g. Gym): how many people can independently hold a
+   * confirmed spot in the same slot.
+   * "group" (music/dance/pickleball): always 1 — one group occupies the
+   * whole slot.
+   */
+  capacityPerSlot: number;
+  /** "group" amenities only: max people per group, booker included. */
+  groupSize?: number;
+  /** Optional cap on how many can be on the waiting list for a slot. */
+  waitlistCap?: number;
 }
 
-export type BookingStatus = "confirmed" | "waiting" | "cancelled";
-
-export interface Booking {
-  id: string;
-  slot_id: string;
-  slot_label: string;
-  user_id: string;
-  user_name: string;
-  status: BookingStatus;
-  created_at: string;
+export interface BookingEntry {
+  name: string;
+  status: "confirmed" | "waiting";
+  /** "group" amenities only: extra members the booker added, not incl. themself. */
+  guests?: string[];
 }
 
-export interface CreditTransaction {
-  id: string;
-  amount: number;
-  reason: string;
-  created_at: string;
+export interface TimeSlot {
+  id: string; // `${amenityId}-${start}`
+  start: string; // "06:00"
+  end: string; // "06:30"
+  capacity: number;
+  bookings: BookingEntry[];
 }
 
-export function slotStatus(slot: Slot): SlotStatus {
-  if (slot.booked_count < slot.capacity) return "free";
-  if (slot.waiting_count > 0) return "waiting";
+export function slotStatus(slot: TimeSlot): SlotStatus {
+  const confirmed = slot.bookings.filter((b) => b.status === "confirmed").length;
+  const waiting = slot.bookings.filter((b) => b.status === "waiting").length;
+  if (confirmed < slot.capacity) return "free";
+  if (waiting > 0) return "waiting";
   return "full";
 }

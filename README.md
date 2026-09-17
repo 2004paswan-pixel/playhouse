@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Playhouse
 
-## Getting Started
+Amenity slot booking for Masters' Union — pick an amenity (Gym, Music Rooms,
+Dance Room, Pickleball Court), see a 30-minute slot calendar, and book or join
+the waiting list. XP shown top-right (currently a flat 100, no login yet
+— that's coming later once it's linked to sign-up).
 
-First, run the development server:
+Runs out of the box with sample data, so you can deploy and share a link today.
+See **[DEPLOY.md](./DEPLOY.md)** for the very basic step-by-step Vercel deploy guide.
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What's here
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` — amenity grid (Gym is the large card, Music Room 1 & 2, Dance Room,
+  Pickleball Court are the smaller ones)
+- `/amenities/[slug]` — 30-minute slot calendar for that amenity, grouped by
+  peak window (06:00–09:00, 12:30–14:00, 17:00–22:00). Click a slot to see
+  who's confirmed, who's waiting, and to book / join the waiting list /
+  cancel your own booking
+- `supabase/schema.sql` — database schema, ready for when login and real
+  bookings are wired in
 
-## Learn More
+## Swapping in the real logo
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The logo is wired in at `public/logo.png`, and the XP token icon at
+`public/xp-token.png` — see step 5 in [DEPLOY.md](./DEPLOY.md) if you ever
+need to swap either.

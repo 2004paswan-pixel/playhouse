@@ -1,16 +1,16 @@
-# Deploying Unions'Q to Vercel — a very basic guide
+# Deploying Playhouse to Vercel — a very basic guide
 
 This app runs right away with sample data, so you can deploy and share a working link
 today, then connect real login/booking later.
 
 ## 1. Put the code on GitHub
 
-1. Go to [github.com/new](https://github.com/new) and create a new repository (e.g. `unions-q`). Keep it empty — no README, no .gitignore.
-2. On your computer, inside the `unions-q` folder, run:
+1. Go to [github.com/new](https://github.com/new) and create a new repository (e.g. `playhouse`). Keep it empty — no README, no .gitignore.
+2. On your computer, inside the `playhouse` folder, run:
    ```
-   git remote add origin https://github.com/YOUR-USERNAME/unions-q.git
+   git remote add origin https://github.com/YOUR-USERNAME/playhouse.git
    git add -A
-   git commit -m "Initial Unions'Q build"
+   git commit -m "Initial Playhouse build"
    git branch -M main
    git push -u origin main
    ```
@@ -19,11 +19,11 @@ today, then connect real login/booking later.
 
 1. Go to [vercel.com](https://vercel.com) and sign up / log in (use "Continue with GitHub" — it's the easiest).
 2. Click **Add New… → Project**.
-3. Pick the `unions-q` repository from the list and click **Import**.
+3. Pick the `playhouse` repository from the list and click **Import**.
 4. Leave all the build settings as-is (Vercel auto-detects Next.js).
 5. Click **Deploy**. Wait about a minute.
 
-That's it — Vercel gives you a live link like `https://unions-q.vercel.app`.
+That's it — Vercel gives you a live link like `https://playhouse.vercel.app`.
 It works immediately with the built-in sample slots and bookings, no extra setup needed.
 
 ## 3. Share the link
@@ -48,9 +48,11 @@ real:
 5. Go to **Deployments**, click the ⋯ menu on the latest deployment, and choose
    **Redeploy** so the new variables take effect.
 
-## 5. Swapping in your real logo
+## 5. Swapping the logo or XP icon
 
-Replace `public/logo.svg` with your actual logo file (keep the filename `logo.svg`,
-or update the two references to it in `src/components/Sidebar.tsx` and
-`src/app/login/page.tsx` if you use a different filename/format like `.png`). Commit
-and push — Vercel redeploys automatically on every push to `main`.
+Your logo is already in at `public/logo.png`, and the XP token icon (cropped and made
+transparent from the coin image you shared) is at `public/xp-token.png`. To update
+either later, replace the file (keep the same filename, or update the reference in
+`src/components/Header.tsx` / `src/app/layout.tsx` if you use a different
+filename/format). Commit and push — Vercel redeploys automatically on every push to
+`main`.
