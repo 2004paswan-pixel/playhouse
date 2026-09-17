@@ -60,17 +60,17 @@ export default function AmenityPage({
       </div>
 
       <Header xp={100} />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-6">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-3.5 py-3 sm:px-6 sm:py-6">
         <Link
           href="/"
-          className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
+          className="mb-2.5 inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground sm:mb-3 sm:text-sm"
         >
-          <ArrowLeft size={14} />
+          <ArrowLeft size={13} />
           All amenities
         </Link>
 
         {/* Room hero */}
-        <div className="relative mb-4 flex h-36 items-end overflow-hidden rounded-lg border border-border bg-gradient-to-br from-surface-2 to-surface">
+        <div className="relative mb-3 flex h-24 items-end overflow-hidden rounded-lg border border-border bg-gradient-to-br from-surface-2 to-surface sm:mb-4 sm:h-36">
           {amenity.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -82,16 +82,17 @@ export default function AmenityPage({
             <Icon size={72} className="absolute -right-2 -top-2 text-foreground/5" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-          <div className="relative z-10 flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-black/40 text-accent backdrop-blur-sm">
-              <Icon size={20} />
+          <div className="relative z-10 flex items-center gap-2 p-2.5 sm:gap-3 sm:p-4">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-black/40 text-accent backdrop-blur-sm sm:h-10 sm:w-10">
+              <Icon size={16} className="sm:hidden" />
+              <Icon size={20} className="hidden sm:block" />
             </div>
-            <div>
-              <h1 className="font-display text-2xl italic leading-tight">{amenity.name}</h1>
-              <p className="text-xs text-muted">
+            <div className="min-w-0">
+              <h1 className="font-display text-lg italic leading-tight sm:text-2xl">{amenity.name}</h1>
+              <p className="truncate text-[10px] text-muted sm:text-xs">
                 {amenity.bookingType === "individual"
-                  ? `${amenity.capacityPerSlot} spots per 30-min slot · waitlist up to ${amenity.waitlistCap}`
-                  : `One group per 30-min slot · up to ${amenity.groupSize} people`}
+                  ? `${amenity.capacityPerSlot} spots per slot · waitlist up to ${amenity.waitlistCap}`
+                  : `One group per slot · up to ${amenity.groupSize} people`}
               </p>
             </div>
           </div>
@@ -99,11 +100,12 @@ export default function AmenityPage({
 
         {/* Date + legend */}
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold leading-none">
-            <CalendarDays size={15} className="text-accent" />
+          <h2 className="flex items-center gap-1.5 text-xs font-semibold leading-none sm:text-sm">
+            <CalendarDays size={13} className="text-accent sm:hidden" />
+            <CalendarDays size={15} className="hidden text-accent sm:block" />
             {today}
           </h2>
-          <div className="flex items-center gap-3 text-[11px] leading-none text-muted">
+          <div className="flex items-center gap-2.5 text-[10px] leading-none text-muted sm:gap-3 sm:text-[11px]">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-sm bg-success/60" /> Available
             </span>
@@ -111,43 +113,47 @@ export default function AmenityPage({
               <span className="h-2 w-2 rounded-sm bg-surface-2 border border-border" /> Unavailable
             </span>
             <span className="flex items-center gap-1">
-              <Flame size={11} className="text-danger" /> Peak
+              <Flame size={10} className="text-danger" /> Peak
             </span>
           </div>
         </div>
 
-        {/* Continuous day calendar — 06:00 to 22:00, 32 slots, own card per slot */}
-        <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8">
-          {slots.map((slot) => {
-            const status = slotStatus(slot);
-            const mine = slot.bookings.some((b) => b.name === CURRENT_USER);
-            const peak = isPeak(slot.start);
-            const waitingCount = slot.bookings.filter((b) => b.status === "waiting").length;
+        {/* Continuous day calendar — 06:00 to 22:00, 32 slots. Kept compact and
+            framed rather than a wall-to-wall grid of boxes. */}
+        <div className="rounded-xl border border-border/60 bg-surface/40 p-2.5 sm:border-none sm:bg-transparent sm:p-0">
+          <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-6 sm:gap-2.5 md:grid-cols-8">
+            {slots.map((slot) => {
+              const status = slotStatus(slot);
+              const mine = slot.bookings.some((b) => b.name === CURRENT_USER);
+              const peak = isPeak(slot.start);
+              const waitingCount = slot.bookings.filter((b) => b.status === "waiting").length;
 
-            return (
-              <button
-                key={slot.id}
-                onClick={() => setActiveSlotId(slot.id)}
-                title={`${slot.start}–${slot.end} · ${STATUS_LABEL[status]}`}
-                className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border border-border text-center shadow-sm transition-transform hover:-translate-y-0.5 hover:border-accent/50 ${STATUS_CELL[status]} ${
-                  mine ? "ring-2 ring-inset ring-accent" : ""
-                }`}
-              >
-                {peak && (
-                  <Flame size={8} className="absolute right-1 top-1 text-danger opacity-90" />
-                )}
-                <span className="font-mono-tight text-[11px] font-medium leading-none">
-                  {slot.start}
-                </span>
-                {waitingCount > 0 && (
-                  <span className="text-[9px] leading-none opacity-90">
-                    {waitingCount}
-                    {amenity.waitlistCap != null && `/${amenity.waitlistCap}`} waiting
+              return (
+                <button
+                  key={slot.id}
+                  onClick={() => setActiveSlotId(slot.id)}
+                  title={`${slot.start}–${slot.end} · ${STATUS_LABEL[status]}`}
+                  className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border border-border/70 text-center shadow-sm transition-transform hover:-translate-y-0.5 hover:border-accent/50 sm:rounded-lg sm:border-border ${STATUS_CELL[status]} ${
+                    mine ? "ring-2 ring-inset ring-accent" : ""
+                  }`}
+                >
+                  {peak && (
+                    <Flame size={7} className="absolute right-0.5 top-0.5 text-danger opacity-90 sm:right-1 sm:top-1 sm:size-2" />
+                  )}
+                  <span className="font-mono-tight text-[9px] font-medium leading-none sm:text-[11px]">
+                    {slot.start}
                   </span>
-                )}
-              </button>
-            );
-          })}
+                  {waitingCount > 0 && (
+                    <span className="text-[7px] leading-none opacity-90 sm:text-[9px]">
+                      {waitingCount}
+                      {amenity.waitlistCap != null && `/${amenity.waitlistCap}`}
+                      <span className="hidden sm:inline"> waiting</span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </main>
 

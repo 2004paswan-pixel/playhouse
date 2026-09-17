@@ -54,19 +54,19 @@ export default function AmenityCard({ amenity }: { amenity: Amenity }) {
       {/* inner ring for a bit of polish */}
       <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/5" />
 
-      <div className={`relative z-10 flex items-end justify-between gap-2 ${isLarge ? "p-6" : "p-4"}`}>
+      <div className={`relative z-10 flex items-end justify-between gap-1.5 ${isLarge ? "p-3.5 sm:p-6" : "p-2.5 sm:p-4"}`}>
         <div className="min-w-0">
           <h3
             className={`truncate font-display italic leading-none text-foreground ${
               isLarge
-                ? "text-[clamp(1.9rem,5.2vh,3.4rem)]"
-                : "text-[clamp(1.15rem,3.2vh,1.85rem)]"
+                ? "text-[1.6rem] sm:text-[2.1rem] md:text-[clamp(1.9rem,5.2vh,3.4rem)]"
+                : "text-[0.95rem] sm:text-lg md:text-[clamp(1.15rem,3.2vh,1.85rem)]"
             }`}
           >
             {amenity.name}
           </h3>
           <p
-            className={`flex items-center gap-1 text-accent transition-all duration-300 ${
+            className={`hidden items-center gap-1 text-accent transition-all duration-300 sm:flex ${
               isLarge ? "mt-1.5 text-sm" : "mt-1 text-xs"
             } translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100`}
           >
@@ -75,10 +75,11 @@ export default function AmenityCard({ amenity }: { amenity: Amenity }) {
         </div>
         <div
           className={`flex shrink-0 items-center justify-center rounded-full bg-black/50 text-accent backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 ${
-            isLarge ? "h-12 w-12" : "h-8 w-8"
+            isLarge ? "h-8 w-8 sm:h-12 sm:w-12" : "h-6 w-6 sm:h-8 sm:w-8"
           }`}
         >
-          <Icon size={isLarge ? 24 : 15} />
+          <Icon size={isLarge ? 17 : 12} className="sm:hidden" />
+          <Icon size={isLarge ? 24 : 15} className="hidden sm:block" />
         </div>
       </div>
     </Link>

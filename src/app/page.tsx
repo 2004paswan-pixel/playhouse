@@ -14,21 +14,21 @@ export default function Home() {
       </div>
 
       <Header xp={100} />
-      <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col px-6 py-4">
-        <div className="mb-4 shrink-0">
-          <h1 className="font-display text-[clamp(2.1rem,6vh,3.75rem)] italic leading-[0.95]">
+      <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col px-3.5 py-2.5 sm:px-6 sm:py-4">
+        <div className="mb-2.5 shrink-0 sm:mb-4">
+          <h1 className="font-display text-[clamp(1.6rem,7vh,3.75rem)] italic leading-[0.95] sm:text-[clamp(2.1rem,6vh,3.75rem)]">
             Amenities
           </h1>
-          <p className="mt-1 text-[clamp(0.9rem,2vh,1.15rem)] text-muted">
+          <p className="mt-1 text-[0.8rem] text-muted sm:text-[clamp(0.9rem,2vh,1.15rem)]">
             Pick one to see the day&apos;s slots and book in.
           </p>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 md:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col gap-2.5 sm:gap-4 md:flex-row">
           <div className="min-h-0 flex-1 md:flex-none md:basis-[36%]">
             <AmenityCard amenity={gym} />
           </div>
-          <div className="grid min-h-0 flex-[1.4] grid-cols-2 auto-rows-fr gap-4 md:flex-1">
+          <div className="grid min-h-0 flex-[1.4] grid-cols-2 auto-rows-fr gap-2.5 sm:gap-4 md:flex-1">
             {others.map((a) => (
               <AmenityCard key={a.id} amenity={a} />
             ))}
