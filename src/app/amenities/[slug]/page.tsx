@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, X, Dumbbell, Music, Footprints, CircleDot, Flame, CalendarDays, Plus } from "lucide-react";
 import Header from "@/components/Header";
 import Avatar from "@/components/Avatar";
-import { AMENITIES, isPeak } from "@/lib/amenities-data";
+import { AMENITIES, isPeak, xpCostFor } from "@/lib/amenities-data";
 import { useBookings, CURRENT_USER } from "@/lib/bookings-context";
 import { Amenity, TimeSlot, slotStatus } from "@/lib/types";
 
@@ -59,7 +59,7 @@ export default function AmenityPage({
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-accent/5 blur-[100px]" />
       </div>
 
-      <Header xp={100} />
+      <Header />
       <main className="mx-auto w-full max-w-3xl flex-1 px-3.5 py-3 sm:px-6 sm:py-6">
         <Link
           href="/"
@@ -177,7 +177,7 @@ function SlotDetail({
   amenity: Amenity;
   onClose: () => void;
 }) {
-  const { book, cancel, addGuest, removeGuest } = useBookings();
+  const { book, cancel, addGuest, removeGuest, xp } = useBookings();
   const [guestInput, setGuestInput] = useState("");
   const status = slotStatus(slot);
   const confirmed = slot.bookings.filter((b) => b.status === "confirmed");
@@ -186,10 +186,11 @@ function SlotDetail({
   const isGroup = amenity.bookingType === "group";
   const waitlistFull =
     amenity.waitlistCap != null && waitlisted.length >= amenity.waitlistCap && !mine;
+  const cost = xpCostFor(amenity, slot.start);
+  const canAffordBooking = status !== "free" || xp >= cost;
 
   function handleBook() {
-    const ok = book(amenity.id, slot.id);
-    if (!ok) return; // waitlist was full — button is disabled anyway
+    book(amenity.id, slot.id); // blocked cases are pre-disabled in the UI below
   }
 
   function handleAddGuest() {
@@ -327,12 +328,19 @@ function SlotDetail({
           >
             Waitlist full
           </button>
+        ) : !canAffordBooking ? (
+          <button
+            disabled
+            className="w-full cursor-not-allowed rounded-md border border-border py-2 text-sm font-medium text-muted"
+          >
+            Not enough XP · need {cost}
+          </button>
         ) : (
           <button
             onClick={handleBook}
             className="w-full rounded-md bg-accent py-2 text-sm font-semibold text-accent-foreground hover:opacity-90"
           >
-            {status === "free" ? "Book this slot" : "Join waitlist"}
+            {status === "free" ? `Book this slot · ${cost} XP` : "Join waitlist · free"}
           </button>
         )}
       </div>

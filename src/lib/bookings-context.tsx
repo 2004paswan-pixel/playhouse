@@ -8,24 +8,33 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { AMENITIES, getSlotsForAmenity } from "./amenities-data";
+import { AMENITIES, getSlotsForAmenity, xpCostFor } from "./amenities-data";
 import { TimeSlot } from "./types";
 
 export const CURRENT_USER = "You";
-const STORAGE_KEY = "playhouse-slots-v1";
+const STORAGE_KEY = "playhouse-state-v1";
+const STARTING_XP = 100;
 
 type SlotsByAmenity = Record<string, TimeSlot[]>;
+interface PersistedState {
+  slotsByAmenity: SlotsByAmenity;
+  xp: number;
+}
 
-function loadInitial(): SlotsByAmenity {
-  const fresh: SlotsByAmenity = {};
-  for (const a of AMENITIES) fresh[a.id] = getSlotsForAmenity(a.id);
+function loadInitial(): PersistedState {
+  const freshSlots: SlotsByAmenity = {};
+  for (const a of AMENITIES) freshSlots[a.id] = getSlotsForAmenity(a.id);
+  const fresh: PersistedState = { slotsByAmenity: freshSlots, xp: STARTING_XP };
 
   if (typeof window === "undefined") return fresh;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return fresh;
-    const saved = JSON.parse(raw) as SlotsByAmenity;
-    return { ...fresh, ...saved };
+    const saved = JSON.parse(raw) as Partial<PersistedState>;
+    return {
+      slotsByAmenity: { ...freshSlots, ...saved.slotsByAmenity },
+      xp: typeof saved.xp === "number" ? saved.xp : STARTING_XP,
+    };
   } catch {
     return fresh;
   }
@@ -39,10 +48,12 @@ export interface MyBooking {
   guests?: string[];
 }
 
+export type BookResult = "booked" | "waitlisted" | "waitlist-full" | "insufficient-xp";
+
 interface BookingsContextValue {
   getSlots: (amenityId: string) => TimeSlot[];
-  /** Returns false when the join was blocked (e.g. waitlist is full). */
-  book: (amenityId: string, slotId: string) => boolean;
+  xp: number;
+  book: (amenityId: string, slotId: string) => BookResult;
   cancel: (amenityId: string, slotId: string) => void;
   addGuest: (amenityId: string, slotId: string, guestName: string) => void;
   removeGuest: (amenityId: string, slotId: string, guestIndex: number) => void;
@@ -52,27 +63,38 @@ interface BookingsContextValue {
 const BookingsContext = createContext<BookingsContextValue | null>(null);
 
 export function BookingsProvider({ children }: { children: ReactNode }) {
-  const [slotsByAmenity, setSlotsByAmenity] = useState<SlotsByAmenity>(loadInitial);
+  const [state, setState] = useState<PersistedState>(loadInitial);
+  const { slotsByAmenity, xp } = state;
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(slotsByAmenity));
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
       // best-effort only
     }
-  }, [slotsByAmenity]);
+  }, [state]);
+
+  function updateSlots(amenityId: string, updater: (slots: TimeSlot[]) => TimeSlot[]) {
+    setState((prev) => {
+      const slots = prev.slotsByAmenity[amenityId] ?? getSlotsForAmenity(amenityId);
+      return {
+        ...prev,
+        slotsByAmenity: { ...prev.slotsByAmenity, [amenityId]: updater(slots) },
+      };
+    });
+  }
 
   function getSlots(amenityId: string): TimeSlot[] {
     return slotsByAmenity[amenityId] ?? getSlotsForAmenity(amenityId);
   }
 
-  function book(amenityId: string, slotId: string): boolean {
+  function book(amenityId: string, slotId: string): BookResult {
     const amenity = AMENITIES.find((a) => a.id === amenityId);
-    if (!amenity) return false;
+    if (!amenity) return "waitlist-full";
 
-    let blocked = false;
-    setSlotsByAmenity((prev) => {
-      const slots = prev[amenityId] ?? getSlotsForAmenity(amenityId);
+    let result: BookResult = "booked";
+    setState((prev) => {
+      const slots = prev.slotsByAmenity[amenityId] ?? getSlotsForAmenity(amenityId);
       const updated = slots.map((s) => {
         if (s.id !== slotId) return s;
         if (s.bookings.some((b) => b.name === CURRENT_USER)) return s;
@@ -82,10 +104,17 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
         const isFree = confirmedCount < s.capacity;
 
         if (!isFree && amenity.waitlistCap != null && waitingCount >= amenity.waitlistCap) {
-          blocked = true;
+          result = "waitlist-full";
           return s;
         }
 
+        // Confirmed bookings cost XP; joining a waitlist is always free.
+        if (isFree && prev.xp < xpCostFor(amenity, s.start)) {
+          result = "insufficient-xp";
+          return s;
+        }
+
+        result = isFree ? "booked" : "waitlisted";
         return {
           ...s,
           bookings: [
@@ -98,20 +127,34 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
           ],
         };
       });
-      return { ...prev, [amenityId]: updated };
+
+      if (result === "waitlist-full" || result === "insufficient-xp") return prev;
+
+      const charged = result === "booked" ? xpCostFor(amenity, slots.find((s) => s.id === slotId)!.start) : 0;
+      return {
+        slotsByAmenity: { ...prev.slotsByAmenity, [amenityId]: updated },
+        xp: prev.xp - charged,
+      };
     });
-    return !blocked;
+    return result;
   }
 
   function cancel(amenityId: string, slotId: string) {
-    setSlotsByAmenity((prev) => {
-      const slots = prev[amenityId] ?? getSlotsForAmenity(amenityId);
+    const amenity = AMENITIES.find((a) => a.id === amenityId);
+    setState((prev) => {
+      const slots = prev.slotsByAmenity[amenityId] ?? getSlotsForAmenity(amenityId);
+      const mine = slots.find((s) => s.id === slotId)?.bookings.find((b) => b.name === CURRENT_USER);
+      const refund = amenity && mine?.status === "confirmed" ? xpCostFor(amenity, slots.find((s) => s.id === slotId)!.start) : 0;
+
       const updated = slots.map((s) =>
         s.id !== slotId
           ? s
           : { ...s, bookings: s.bookings.filter((b) => b.name !== CURRENT_USER) }
       );
-      return { ...prev, [amenityId]: updated };
+      return {
+        slotsByAmenity: { ...prev.slotsByAmenity, [amenityId]: updated },
+        xp: prev.xp + refund,
+      };
     });
   }
 
@@ -121,9 +164,8 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
     const amenity = AMENITIES.find((a) => a.id === amenityId);
     if (!amenity || amenity.bookingType !== "group") return;
 
-    setSlotsByAmenity((prev) => {
-      const slots = prev[amenityId] ?? getSlotsForAmenity(amenityId);
-      const updated = slots.map((s) => {
+    updateSlots(amenityId, (slots) =>
+      slots.map((s) => {
         if (s.id !== slotId) return s;
         return {
           ...s,
@@ -135,15 +177,13 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
             return { ...b, guests: [...guests, name] };
           }),
         };
-      });
-      return { ...prev, [amenityId]: updated };
-    });
+      })
+    );
   }
 
   function removeGuest(amenityId: string, slotId: string, guestIndex: number) {
-    setSlotsByAmenity((prev) => {
-      const slots = prev[amenityId] ?? getSlotsForAmenity(amenityId);
-      const updated = slots.map((s) => {
+    updateSlots(amenityId, (slots) =>
+      slots.map((s) => {
         if (s.id !== slotId) return s;
         return {
           ...s,
@@ -152,9 +192,8 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
             return { ...b, guests: b.guests.filter((_, i) => i !== guestIndex) };
           }),
         };
-      });
-      return { ...prev, [amenityId]: updated };
-    });
+      })
+    );
   }
 
   const myBookings = useMemo<MyBooking[]>(() => {
@@ -179,7 +218,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
 
   return (
     <BookingsContext.Provider
-      value={{ getSlots, book, cancel, addGuest, removeGuest, myBookings }}
+      value={{ getSlots, xp, book, cancel, addGuest, removeGuest, myBookings }}
     >
       {children}
     </BookingsContext.Provider>

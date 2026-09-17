@@ -21,6 +21,7 @@ export const AMENITIES: Amenity[] = [
     bookingType: "individual",
     capacityPerSlot: 30,
     waitlistCap: 5,
+    xpCost: { offPeak: 10, peak: 20 },
   },
   {
     id: "music-room-1",
@@ -30,6 +31,7 @@ export const AMENITIES: Amenity[] = [
     bookingType: "group",
     capacityPerSlot: 1,
     groupSize: 5,
+    xpCost: { offPeak: 25, peak: 50 },
   },
   {
     id: "music-room-2",
@@ -39,6 +41,7 @@ export const AMENITIES: Amenity[] = [
     bookingType: "group",
     capacityPerSlot: 1,
     groupSize: 5,
+    xpCost: { offPeak: 25, peak: 50 },
   },
   {
     id: "dance-room",
@@ -48,6 +51,7 @@ export const AMENITIES: Amenity[] = [
     bookingType: "group",
     capacityPerSlot: 1,
     groupSize: 5,
+    xpCost: { offPeak: 25, peak: 50 },
   },
   {
     id: "pickleball-court",
@@ -57,6 +61,7 @@ export const AMENITIES: Amenity[] = [
     bookingType: "group",
     capacityPerSlot: 1,
     groupSize: 4,
+    xpCost: { offPeak: 25, peak: 50 },
   },
 ];
 
@@ -75,6 +80,11 @@ function toTimeStr(mins: number): string {
 
 export function isPeak(start: string): boolean {
   return PEAK_WINDOWS.some((w) => start >= w.start && start < w.end);
+}
+
+/** XP charged for a CONFIRMED booking of this slot. Waitlist joins are free. */
+export function xpCostFor(amenity: Amenity, start: string): number {
+  return isPeak(start) ? amenity.xpCost.peak : amenity.xpCost.offPeak;
 }
 
 const NAMES = [

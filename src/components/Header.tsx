@@ -5,9 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarCheck } from "lucide-react";
 import MyBookingsPanel from "./MyBookingsPanel";
+import ScannerButton from "./ScannerButton";
+import { useBookings } from "@/lib/bookings-context";
 
-export default function Header({ xp = 100 }: { xp?: number }) {
+export default function Header() {
   const [open, setOpen] = useState(false);
+  const { xp } = useBookings();
 
   return (
     <>
@@ -43,6 +46,7 @@ export default function Header({ xp = 100 }: { xp?: number }) {
       </header>
 
       {open && <MyBookingsPanel onClose={() => setOpen(false)} />}
+      <ScannerButton />
     </>
   );
 }

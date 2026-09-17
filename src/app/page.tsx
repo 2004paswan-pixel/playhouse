@@ -13,7 +13,7 @@ export default function Home() {
         <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-accent/5 blur-[100px]" />
       </div>
 
-      <Header xp={100} />
+      <Header />
       <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col px-3.5 py-2.5 sm:px-6 sm:py-4">
         <div className="mb-2.5 shrink-0 sm:mb-4">
           <h1 className="font-display text-[clamp(1.6rem,7vh,3.75rem)] italic leading-[0.95] sm:text-[clamp(2.1rem,6vh,3.75rem)]">

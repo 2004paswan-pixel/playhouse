@@ -20,6 +20,8 @@ export interface Amenity {
   groupSize?: number;
   /** Optional cap on how many can be on the waiting list for a slot. */
   waitlistCap?: number;
+  /** XP cost to confirm a booking — joining a waitlist is always free. */
+  xpCost: { offPeak: number; peak: number };
 }
 
 export interface BookingEntry {
