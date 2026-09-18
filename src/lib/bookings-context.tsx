@@ -14,7 +14,7 @@ import { todayISO } from "./date-utils";
 
 export const CURRENT_USER = "You";
 const STORAGE_KEY = "players-union-state-v1";
-const STARTING_XP = 100;
+export const STARTING_XP = 100;
 const MAX_HISTORY = 200;
 
 // Slots are stored per amenity *and* day, keyed `${amenityId}::${dateISO}`,
