@@ -163,7 +163,9 @@ function seededFillGroup(seed: string, groupSize: number): BookingEntry[] {
   ];
 }
 
-export function getSlotsForAmenity(amenityId: string): TimeSlot[] {
+/** `dateISO` ("YYYY-MM-DD") seeds the mock roster so each day of the week shows
+ * a different (but deterministic) mix of free / waiting / full slots. */
+export function getSlotsForAmenity(amenityId: string, dateISO: string): TimeSlot[] {
   const amenity = AMENITIES.find((a) => a.id === amenityId);
   if (!amenity) return [];
 
@@ -173,11 +175,12 @@ export function getSlotsForAmenity(amenityId: string): TimeSlot[] {
   while (cursor < end) {
     const start = toTimeStr(cursor);
     const slotEnd = toTimeStr(cursor + 30);
-    const id = `${amenityId}-${start}`;
+    const seed = `${amenityId}-${dateISO}-${start}`;
+    const id = `${amenityId}-${dateISO}-${start}`;
     const bookings =
       amenity.bookingType === "individual"
-        ? seededFillIndividual(id, amenity.capacityPerSlot, amenity.waitlistCap ?? 99)
-        : seededFillGroup(id, amenity.groupSize ?? 4);
+        ? seededFillIndividual(seed, amenity.capacityPerSlot, amenity.waitlistCap ?? 99)
+        : seededFillGroup(seed, amenity.groupSize ?? 4);
     slots.push({
       id,
       start,

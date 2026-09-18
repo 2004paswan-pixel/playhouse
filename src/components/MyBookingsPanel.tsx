@@ -2,18 +2,27 @@
 
 import { X, CalendarCheck, Clock3 } from "lucide-react";
 import { useBookings } from "@/lib/bookings-context";
+import { dayLabel, nowHHMM, todayISO } from "@/lib/date-utils";
 
-function nowHHMM(): string {
-  const d = new Date();
-  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+function isUpcoming(date: string, start: string, today: string, now: string): boolean {
+  if (date > today) return true;
+  if (date < today) return false;
+  return start >= now;
+}
+
+function dateSuffix(date: string, today: string): string {
+  if (date === today) return "";
+  const { weekday, day } = dayLabel(date);
+  return ` · ${weekday} ${day}`;
 }
 
 export default function MyBookingsPanel({ onClose }: { onClose: () => void }) {
   const { myBookings, cancel } = useBookings();
+  const today = todayISO();
   const now = nowHHMM();
 
-  const upcoming = myBookings.filter((b) => b.slot.start >= now);
-  const past = myBookings.filter((b) => b.slot.start < now);
+  const upcoming = myBookings.filter((b) => isUpcoming(b.date, b.slot.start, today, now));
+  const past = myBookings.filter((b) => !isUpcoming(b.date, b.slot.start, today, now));
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 px-4 pt-20">
@@ -39,7 +48,7 @@ export default function MyBookingsPanel({ onClose }: { onClose: () => void }) {
                 Upcoming
               </p>
               {upcoming.length === 0 ? (
-                <p className="text-sm text-muted">Nothing upcoming today.</p>
+                <p className="text-sm text-muted">Nothing upcoming.</p>
               ) : (
                 <ul className="scroll-list flex max-h-56 flex-col gap-2 pr-1">
                   {upcoming.map((b) => (
@@ -52,13 +61,14 @@ export default function MyBookingsPanel({ onClose }: { onClose: () => void }) {
                         <p className="flex items-center gap-1 text-xs text-muted">
                           <Clock3 size={11} />
                           {b.slot.start}–{b.slot.end}
+                          {dateSuffix(b.date, today)}
                           {b.status === "waiting" && (
                             <span className="ml-1 text-warning">&middot; waitlisted</span>
                           )}
                         </p>
                       </div>
                       <button
-                        onClick={() => cancel(b.amenityId, b.slot.id)}
+                        onClick={() => cancel(b.amenityId, b.date, b.slot.id)}
                         className="shrink-0 rounded border border-danger/40 px-2 py-1 text-xs font-medium text-danger hover:bg-danger/10"
                       >
                         {b.status === "confirmed" ? "Cancel" : "Leave"}
@@ -84,6 +94,7 @@ export default function MyBookingsPanel({ onClose }: { onClose: () => void }) {
                         <p className="truncate text-sm font-medium">{b.amenityName}</p>
                         <p className="text-xs text-muted">
                           {b.slot.start}–{b.slot.end}
+                          {dateSuffix(b.date, today)}
                         </p>
                       </div>
                       <span className="text-xs text-muted">Completed</span>

@@ -1,14 +1,16 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, X, Dumbbell, Music, Footprints, CircleDot, Flame, CalendarDays, Plus, Ticket, Clock3, Lock, Ban } from "lucide-react";
+import { ArrowLeft, X, Dumbbell, Music, Footprints, CircleDot, Flame, CalendarDays, Plus, Ticket, Clock3, Lock, Ban, Check } from "lucide-react";
 import Header from "@/components/Header";
 import Avatar from "@/components/Avatar";
+import WeekPicker from "@/components/WeekPicker";
 import { AMENITIES, isPeak, xpCostFor } from "@/lib/amenities-data";
 import { useBookings, CURRENT_USER } from "@/lib/bookings-context";
 import { Amenity, TimeSlot, slotStatus } from "@/lib/types";
+import { formatFullDate, nowHHMM, todayISO } from "@/lib/date-utils";
 
 const ICONS: Record<string, typeof Dumbbell> = {
   gym: Dumbbell,
@@ -43,14 +45,27 @@ export default function AmenityPage({
   const Icon = ICONS[amenity.id] ?? Dumbbell;
 
   const { getSlots } = useBookings();
-  const slots = getSlots(slug);
+  const [selectedDate, setSelectedDate] = useState(todayISO);
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
+  const [now, setNow] = useState(nowHHMM);
+
+  // Keep "current time" fresh so a past slot quietly drops off the grid
+  // without needing a manual refresh.
+  useEffect(() => {
+    const t = setInterval(() => setNow(nowHHMM()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const allSlots = getSlots(slug, selectedDate);
+  const isToday = selectedDate === todayISO();
+  const slots = isToday ? allSlots.filter((s) => s.end > now) : allSlots;
+
   const activeSlot = slots.find((s) => s.id === activeSlotId) ?? null;
-  const today = new Date().toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+
+  function selectDate(date: string) {
+    setSelectedDate(date);
+    setActiveSlotId(null);
+  }
 
   return (
     <div className="relative flex min-h-screen flex-col text-foreground">
@@ -98,12 +113,14 @@ export default function AmenityPage({
           </div>
         </div>
 
+        <WeekPicker selected={selectedDate} onSelect={selectDate} />
+
         {/* Date + legend */}
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-1.5 text-xs font-semibold leading-none sm:text-sm">
             <CalendarDays size={13} className="text-accent sm:hidden" />
             <CalendarDays size={15} className="hidden text-accent sm:block" />
-            {today}
+            {formatFullDate(selectedDate)}
           </h2>
           <div className="flex items-center gap-2.5 text-[10px] leading-none text-muted sm:gap-3 sm:text-[11px]">
             <span className="flex items-center gap-1.5">
@@ -118,49 +135,61 @@ export default function AmenityPage({
           </div>
         </div>
 
-        {/* Continuous day calendar — 06:00 to 22:00, 32 slots. Kept compact and
-            framed rather than a wall-to-wall grid of boxes. */}
-        <div className="rounded-xl border border-border/60 bg-surface/40 p-1.5 sm:border-none sm:bg-transparent sm:p-0">
-          <div className="grid grid-cols-5 gap-1 sm:grid-cols-6 sm:gap-2.5 md:grid-cols-8">
-            {slots.map((slot) => {
-              const status = slotStatus(slot);
-              const mine = slot.bookings.some((b) => b.name === CURRENT_USER);
-              const peak = isPeak(slot.start);
-              const waitingCount = slot.bookings.filter((b) => b.status === "waiting").length;
-
-              return (
-                <button
-                  key={slot.id}
-                  onClick={() => setActiveSlotId(slot.id)}
-                  title={`${slot.start}–${slot.end} · ${STATUS_LABEL[status]}`}
-                  className={`relative flex aspect-[3/2] flex-col items-center justify-center gap-0.5 rounded-md border border-border/70 text-center shadow-sm transition-transform active:scale-95 hover:-translate-y-0.5 hover:border-accent/50 sm:aspect-square sm:rounded-lg sm:border-border ${STATUS_CELL[status]} ${
-                    mine ? "ring-2 ring-inset ring-accent" : ""
-                  }`}
-                >
-                  {peak && (
-                    <Flame size={7} className="absolute right-0.5 top-0.5 text-danger opacity-90 sm:right-1 sm:top-1 sm:size-2" />
-                  )}
-                  <span className="font-mono-tight text-[9px] font-medium leading-none sm:text-[11px]">
-                    {slot.start}
-                  </span>
-                  {waitingCount > 0 && (
-                    <span className="text-[7px] leading-none opacity-90 sm:text-[9px]">
-                      {waitingCount}
-                      {amenity.waitlistCap != null && `/${amenity.waitlistCap}`}
-                      <span className="hidden sm:inline"> waiting</span>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+        {/* Continuous day calendar — 06:00 to 22:00, 30-min steps. Kept compact
+            and framed rather than a wall-to-wall grid of boxes. Past slots on
+            today's date are filtered out above, so this only ever renders
+            what's actually still bookable. */}
+        {slots.length === 0 ? (
+          <div className="rounded-xl border border-border/60 bg-surface/40 px-4 py-8 text-center">
+            <p className="text-sm text-muted">
+              No more slots left today — pick another day above.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-xl border border-border/60 bg-surface/40 p-1.5 sm:border-none sm:bg-transparent sm:p-0">
+            <div className="grid grid-cols-5 gap-1 sm:grid-cols-6 sm:gap-1.5 md:grid-cols-8">
+              {slots.map((slot) => {
+                const status = slotStatus(slot);
+                const mine = slot.bookings.some((b) => b.name === CURRENT_USER);
+                const peak = isPeak(slot.start);
+                const waitingCount = slot.bookings.filter((b) => b.status === "waiting").length;
+
+                return (
+                  <button
+                    key={slot.id}
+                    onClick={() => setActiveSlotId(slot.id)}
+                    title={`${slot.start}–${slot.end} · ${STATUS_LABEL[status]}`}
+                    className={`relative flex aspect-[3/2] flex-col items-center justify-center gap-0.5 rounded-md border border-border/70 text-center shadow-sm transition-transform active:scale-95 hover:-translate-y-0.5 hover:border-accent/50 sm:rounded-lg sm:border-border ${STATUS_CELL[status]} ${
+                      mine ? "ring-2 ring-inset ring-accent" : ""
+                    }`}
+                  >
+                    {peak && (
+                      <Flame size={7} className="absolute right-0.5 top-0.5 text-danger opacity-90 sm:right-1 sm:top-1 sm:size-2" />
+                    )}
+                    <span className="font-mono-tight text-[9px] font-medium leading-none sm:text-[11px]">
+                      {slot.start}
+                    </span>
+                    {waitingCount > 0 && (
+                      <span className="text-[7px] leading-none opacity-90 sm:text-[9px]">
+                        {waitingCount}
+                        {amenity.waitlistCap != null && `/${amenity.waitlistCap}`}
+                        <span className="hidden sm:inline"> waiting</span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
 
       {activeSlot && (
         <SlotDetail
+          key={activeSlot.id}
           slot={activeSlot}
           amenity={amenity}
+          date={selectedDate}
           onClose={() => setActiveSlotId(null)}
         />
       )}
@@ -171,14 +200,17 @@ export default function AmenityPage({
 function SlotDetail({
   slot,
   amenity,
+  date,
   onClose,
 }: {
   slot: TimeSlot;
   amenity: Amenity;
+  date: string;
   onClose: () => void;
 }) {
   const { book, cancel, addGuest, removeGuest, xp } = useBookings();
   const [guestInput, setGuestInput] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const status = slotStatus(slot);
   const confirmed = slot.bookings.filter((b) => b.status === "confirmed");
   const waitlisted = slot.bookings.filter((b) => b.status === "waiting");
@@ -190,12 +222,23 @@ function SlotDetail({
   const canAffordBooking = status !== "free" || xp >= cost;
 
   function handleBook() {
-    book(amenity.id, slot.id); // blocked cases are pre-disabled in the UI below
+    book(amenity.id, date, slot.id); // blocked cases are pre-disabled in the UI below
+    setConfirming(false);
+  }
+
+  function handlePrimaryClick() {
+    // Confirmed bookings spend XP, so make sure the person means it. Joining
+    // a free waitlist is low-stakes and books straight away.
+    if (status === "free") {
+      setConfirming(true);
+    } else {
+      handleBook();
+    }
   }
 
   function handleAddGuest() {
     if (!guestInput.trim()) return;
-    addGuest(amenity.id, slot.id, guestInput.trim());
+    addGuest(amenity.id, date, slot.id, guestInput.trim());
     setGuestInput("");
   }
 
@@ -259,7 +302,7 @@ function SlotDetail({
                             </span>
                             {b.name === CURRENT_USER && (
                               <button
-                                onClick={() => removeGuest(amenity.id, slot.id, gi)}
+                                onClick={() => removeGuest(amenity.id, date, slot.id, gi)}
                                 className="text-muted hover:text-danger"
                               >
                                 <X size={13} />
@@ -316,7 +359,7 @@ function SlotDetail({
 
         {mine ? (
           <button
-            onClick={() => cancel(amenity.id, slot.id)}
+            onClick={() => cancel(amenity.id, date, slot.id)}
             className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-danger/40 bg-danger/5 py-3 text-sm font-semibold text-danger shadow-sm transition-all active:scale-[0.97] hover:border-danger/60 hover:bg-danger/10"
           >
             <Ban size={15} />
@@ -338,9 +381,25 @@ function SlotDetail({
             <Lock size={14} />
             Not enough XP · need {cost}
           </button>
+        ) : confirming ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirming(false)}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-muted transition-all active:scale-[0.97] hover:border-foreground/30 hover:text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleBook}
+              className="flex flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-emerald-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(215,251,61,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(215,251,61,0.7)] hover:brightness-105"
+            >
+              <Check size={16} />
+              Confirm · {cost} XP
+            </button>
+          </div>
         ) : (
           <button
-            onClick={handleBook}
+            onClick={handlePrimaryClick}
             className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-emerald-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(215,251,61,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(215,251,61,0.7)] hover:brightness-105"
           >
             {status === "free" ? (

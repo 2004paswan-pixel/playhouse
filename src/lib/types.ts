@@ -32,7 +32,7 @@ export interface BookingEntry {
 }
 
 export interface TimeSlot {
-  id: string; // `${amenityId}-${start}`
+  id: string; // `${amenityId}-${dateISO}-${start}`
   start: string; // "06:00"
   end: string; // "06:30"
   capacity: number;
