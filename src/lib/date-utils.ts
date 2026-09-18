@@ -54,3 +54,28 @@ export function formatFullDate(iso: string): string {
   const date = new Date(y, m - 1, d);
   return date.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
 }
+
+/** True if a booking for `date`/`start` is still ahead of (or at) `now`. */
+export function isUpcoming(date: string, start: string, today: string = todayISO(), now: string = nowHHMM()): boolean {
+  if (date > today) return true;
+  if (date < today) return false;
+  return start >= now;
+}
+
+/** " · Fri 18" suffix for a booking on a day other than today; "" for today. */
+export function dateSuffix(date: string, today: string = todayISO()): string {
+  if (date === today) return "";
+  const { weekday, day } = dayLabel(date);
+  return ` · ${weekday} ${day}`;
+}
+
+/** Compact timestamp for the XP history list: "Today, 6:42 PM" / "Fri 18 Sep, 6:42 PM". */
+export function formatTransactionTime(at: number): string {
+  const d = new Date(at);
+  const iso = toISODate(d);
+  const today = todayISO();
+  const time = d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  if (iso === today) return `Today, ${time}`;
+  const { weekday, day } = dayLabel(iso);
+  return `${weekday} ${day}, ${time}`;
+}

@@ -2,19 +2,7 @@
 
 import { X, CalendarCheck, Clock3 } from "lucide-react";
 import { useBookings } from "@/lib/bookings-context";
-import { dayLabel, nowHHMM, todayISO } from "@/lib/date-utils";
-
-function isUpcoming(date: string, start: string, today: string, now: string): boolean {
-  if (date > today) return true;
-  if (date < today) return false;
-  return start >= now;
-}
-
-function dateSuffix(date: string, today: string): string {
-  if (date === today) return "";
-  const { weekday, day } = dayLabel(date);
-  return ` · ${weekday} ${day}`;
-}
+import { dateSuffix, isUpcoming, nowHHMM, todayISO } from "@/lib/date-utils";
 
 export default function MyBookingsPanel({ onClose }: { onClose: () => void }) {
   const { myBookings, cancel } = useBookings();

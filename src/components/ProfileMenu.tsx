@@ -55,7 +55,7 @@ export default function ProfileMenu({ onOpenBookings }: { onOpenBookings: () => 
               setOpen(false);
               onOpenBookings();
             }}
-            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-surface-2"
+            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-surface-2 lg:hidden"
           >
             <CalendarCheck size={16} className="text-accent" />
             My bookings

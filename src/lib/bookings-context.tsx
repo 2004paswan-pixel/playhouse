@@ -9,12 +9,13 @@ import {
   ReactNode,
 } from "react";
 import { AMENITIES, getSlotsForAmenity, xpCostFor } from "./amenities-data";
-import { TimeSlot } from "./types";
+import { TimeSlot, XpTransaction } from "./types";
 import { todayISO } from "./date-utils";
 
 export const CURRENT_USER = "You";
 const STORAGE_KEY = "players-union-state-v1";
 const STARTING_XP = 100;
+const MAX_HISTORY = 200;
 
 // Slots are stored per amenity *and* day, keyed `${amenityId}::${dateISO}`,
 // so a booking on Friday doesn't affect Saturday's grid.
@@ -27,10 +28,11 @@ function keyOf(amenityId: string, date: string): string {
 interface PersistedState {
   slotsByKey: SlotsByKey;
   xp: number;
+  xpHistory: XpTransaction[];
 }
 
 function loadInitial(): PersistedState {
-  const fresh: PersistedState = { slotsByKey: {}, xp: STARTING_XP };
+  const fresh: PersistedState = { slotsByKey: {}, xp: STARTING_XP, xpHistory: [] };
   if (typeof window === "undefined") return fresh;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -39,6 +41,7 @@ function loadInitial(): PersistedState {
     return {
       slotsByKey: saved.slotsByKey ?? {},
       xp: typeof saved.xp === "number" ? saved.xp : STARTING_XP,
+      xpHistory: Array.isArray(saved.xpHistory) ? saved.xpHistory : [],
     };
   } catch {
     return fresh;
@@ -59,6 +62,7 @@ export type BookResult = "booked" | "waitlisted" | "waitlist-full" | "insufficie
 interface BookingsContextValue {
   getSlots: (amenityId: string, date: string) => TimeSlot[];
   xp: number;
+  xpHistory: XpTransaction[];
   book: (amenityId: string, date: string, slotId: string) => BookResult;
   cancel: (amenityId: string, date: string, slotId: string) => void;
   addGuest: (amenityId: string, date: string, slotId: string, guestName: string) => void;
@@ -70,7 +74,7 @@ const BookingsContext = createContext<BookingsContextValue | null>(null);
 
 export function BookingsProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedState>(loadInitial);
-  const { slotsByKey, xp } = state;
+  const { slotsByKey, xp, xpHistory } = state;
 
   useEffect(() => {
     try {
@@ -138,10 +142,28 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
 
       if (result === "waitlist-full" || result === "insufficient-xp") return prev;
 
-      const charged = result === "booked" ? xpCostFor(amenity, slots.find((s) => s.id === slotId)!.start) : 0;
+      const bookedSlot = slots.find((s) => s.id === slotId)!;
+      const charged = result === "booked" ? xpCostFor(amenity, bookedSlot.start) : 0;
+      const history =
+        result === "booked"
+          ? [
+              {
+                id: `${slotId}-${Date.now()}`,
+                amenityName: amenity.name,
+                date,
+                start: bookedSlot.start,
+                delta: -charged,
+                reason: "booked" as const,
+                at: Date.now(),
+              },
+              ...prev.xpHistory,
+            ].slice(0, MAX_HISTORY)
+          : prev.xpHistory;
+
       return {
         slotsByKey: { ...prev.slotsByKey, [key]: updated },
         xp: prev.xp - charged,
+        xpHistory: history,
       };
     });
     return result;
@@ -152,17 +174,36 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
     const key = keyOf(amenityId, date);
     setState((prev) => {
       const slots = prev.slotsByKey[key] ?? getSlotsForAmenity(amenityId, date);
-      const mine = slots.find((s) => s.id === slotId)?.bookings.find((b) => b.name === CURRENT_USER);
-      const refund = amenity && mine?.status === "confirmed" ? xpCostFor(amenity, slots.find((s) => s.id === slotId)!.start) : 0;
+      const cancelledSlot = slots.find((s) => s.id === slotId)!;
+      const mine = cancelledSlot.bookings.find((b) => b.name === CURRENT_USER);
+      const refund = amenity && mine?.status === "confirmed" ? xpCostFor(amenity, cancelledSlot.start) : 0;
 
       const updated = slots.map((s) =>
         s.id !== slotId
           ? s
           : { ...s, bookings: s.bookings.filter((b) => b.name !== CURRENT_USER) }
       );
+
+      const history =
+        amenity && refund > 0
+          ? [
+              {
+                id: `${slotId}-${Date.now()}`,
+                amenityName: amenity.name,
+                date,
+                start: cancelledSlot.start,
+                delta: refund,
+                reason: "cancelled" as const,
+                at: Date.now(),
+              },
+              ...prev.xpHistory,
+            ].slice(0, MAX_HISTORY)
+          : prev.xpHistory;
+
       return {
         slotsByKey: { ...prev.slotsByKey, [key]: updated },
         xp: prev.xp + refund,
+        xpHistory: history,
       };
     });
   }
@@ -237,7 +278,7 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
 
   return (
     <BookingsContext.Provider
-      value={{ getSlots, xp, book, cancel, addGuest, removeGuest, myBookings }}
+      value={{ getSlots, xp, xpHistory, book, cancel, addGuest, removeGuest, myBookings }}
     >
       {children}
     </BookingsContext.Provider>

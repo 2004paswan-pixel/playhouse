@@ -39,6 +39,18 @@ export interface TimeSlot {
   bookings: BookingEntry[];
 }
 
+export interface XpTransaction {
+  id: string;
+  amenityName: string;
+  date: string; // dateISO the slot was for
+  start: string; // "18:00"
+  /** Positive = XP credited back (e.g. a cancellation refund); negative = XP spent. */
+  delta: number;
+  reason: "booked" | "cancelled";
+  /** Wall-clock time the transaction happened, for display + ordering. */
+  at: number;
+}
+
 export function slotStatus(slot: TimeSlot): SlotStatus {
   const confirmed = slot.bookings.filter((b) => b.status === "confirmed").length;
   const waiting = slot.bookings.filter((b) => b.status === "waiting").length;

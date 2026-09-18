@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import AmenityCard from "@/components/AmenityCard";
+import DashboardSidebar from "@/components/DashboardSidebar";
 import { AMENITIES } from "@/lib/amenities-data";
 
 export default function Home() {
@@ -14,26 +15,30 @@ export default function Home() {
       </div>
 
       <Header />
-      <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col px-3.5 pt-2.5 pb-20 sm:px-6 sm:py-4">
-        <div className="mb-2 shrink-0 sm:mb-4">
-          <h1 className="font-display text-[1.5rem] italic leading-none sm:text-[clamp(2.1rem,6vh,3.75rem)]">
-            Amenities
-          </h1>
-          <p className="mt-1 text-[0.72rem] text-muted sm:text-[clamp(0.9rem,2vh,1.15rem)]">
-            Pick one to see the day&apos;s slots and book in.
-          </p>
+      <main className="mx-auto flex w-full max-w-6xl min-h-0 flex-1 flex-col px-3.5 pt-2.5 pb-20 sm:px-6 sm:py-4 lg:max-w-[1500px] lg:flex-row lg:gap-6 lg:pb-4">
+        <div className="flex min-h-0 flex-1 flex-col lg:min-w-0">
+          <div className="mb-2 shrink-0 sm:mb-4">
+            <h1 className="font-display text-[1.5rem] italic leading-none sm:text-[clamp(2.1rem,6vh,3.75rem)]">
+              Amenities
+            </h1>
+            <p className="mt-1 text-[0.72rem] text-muted sm:text-[clamp(0.9rem,2vh,1.15rem)]">
+              Pick one to see the day&apos;s slots and book in.
+            </p>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col gap-2.5 sm:gap-4 md:flex-row">
+            <div className="min-h-0 flex-1 md:flex-none md:basis-[36%]">
+              <AmenityCard amenity={gym} />
+            </div>
+            <div className="grid min-h-0 flex-[1.4] grid-cols-2 auto-rows-fr gap-2.5 sm:gap-4 md:flex-1">
+              {others.map((a) => (
+                <AmenityCard key={a.id} amenity={a} />
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2.5 sm:gap-4 md:flex-row">
-          <div className="min-h-0 flex-1 md:flex-none md:basis-[36%]">
-            <AmenityCard amenity={gym} />
-          </div>
-          <div className="grid min-h-0 flex-[1.4] grid-cols-2 auto-rows-fr gap-2.5 sm:gap-4 md:flex-1">
-            {others.map((a) => (
-              <AmenityCard key={a.id} amenity={a} />
-            ))}
-          </div>
-        </div>
+        <DashboardSidebar />
       </main>
     </div>
   );
