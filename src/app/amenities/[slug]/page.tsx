@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, X, Dumbbell, Music, Footprints, CircleDot, Flame, CalendarDays, Plus } from "lucide-react";
+import { ArrowLeft, X, Dumbbell, Music, Footprints, CircleDot, Flame, CalendarDays, Plus, Ticket, Clock3, Lock, Ban } from "lucide-react";
 import Header from "@/components/Header";
 import Avatar from "@/components/Avatar";
 import { AMENITIES, isPeak, xpCostFor } from "@/lib/amenities-data";
@@ -120,8 +120,8 @@ export default function AmenityPage({
 
         {/* Continuous day calendar — 06:00 to 22:00, 32 slots. Kept compact and
             framed rather than a wall-to-wall grid of boxes. */}
-        <div className="rounded-xl border border-border/60 bg-surface/40 p-2.5 sm:border-none sm:bg-transparent sm:p-0">
-          <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-6 sm:gap-2.5 md:grid-cols-8">
+        <div className="rounded-xl border border-border/60 bg-surface/40 p-1.5 sm:border-none sm:bg-transparent sm:p-0">
+          <div className="grid grid-cols-5 gap-1 sm:grid-cols-6 sm:gap-2.5 md:grid-cols-8">
             {slots.map((slot) => {
               const status = slotStatus(slot);
               const mine = slot.bookings.some((b) => b.name === CURRENT_USER);
@@ -133,7 +133,7 @@ export default function AmenityPage({
                   key={slot.id}
                   onClick={() => setActiveSlotId(slot.id)}
                   title={`${slot.start}–${slot.end} · ${STATUS_LABEL[status]}`}
-                  className={`relative flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md border border-border/70 text-center shadow-sm transition-transform hover:-translate-y-0.5 hover:border-accent/50 sm:rounded-lg sm:border-border ${STATUS_CELL[status]} ${
+                  className={`relative flex aspect-[3/2] flex-col items-center justify-center gap-0.5 rounded-md border border-border/70 text-center shadow-sm transition-transform active:scale-95 hover:-translate-y-0.5 hover:border-accent/50 sm:aspect-square sm:rounded-lg sm:border-border ${STATUS_CELL[status]} ${
                     mine ? "ring-2 ring-inset ring-accent" : ""
                   }`}
                 >
@@ -220,7 +220,7 @@ function SlotDetail({
                 ` · ${waitlisted.length}${amenity.waitlistCap != null ? `/${amenity.waitlistCap}` : ""} waitlisted`}
             </p>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-foreground">
+          <button onClick={onClose} aria-label="Close" className="text-muted hover:text-foreground">
             <X size={18} />
           </button>
         </div>
@@ -317,30 +317,43 @@ function SlotDetail({
         {mine ? (
           <button
             onClick={() => cancel(amenity.id, slot.id)}
-            className="w-full rounded-md border border-danger/40 py-2 text-sm font-medium text-danger hover:bg-danger/10"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-danger/40 bg-danger/5 py-3 text-sm font-semibold text-danger shadow-sm transition-all active:scale-[0.97] hover:border-danger/60 hover:bg-danger/10"
           >
+            <Ban size={15} />
             {mine.status === "confirmed" ? "Cancel booking" : "Leave waitlist"}
           </button>
         ) : waitlistFull ? (
           <button
             disabled
-            className="w-full cursor-not-allowed rounded-md border border-border py-2 text-sm font-medium text-muted"
+            className="flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2/60 py-3 text-sm font-medium text-muted"
           >
+            <Lock size={14} />
             Waitlist full
           </button>
         ) : !canAffordBooking ? (
           <button
             disabled
-            className="w-full cursor-not-allowed rounded-md border border-border py-2 text-sm font-medium text-muted"
+            className="flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border border-border bg-surface-2/60 py-3 text-sm font-medium text-muted"
           >
+            <Lock size={14} />
             Not enough XP · need {cost}
           </button>
         ) : (
           <button
             onClick={handleBook}
-            className="w-full rounded-md bg-accent py-2 text-sm font-semibold text-accent-foreground hover:opacity-90"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-emerald-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(215,251,61,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(215,251,61,0.7)] hover:brightness-105"
           >
-            {status === "free" ? `Book this slot · ${cost} XP` : "Join waitlist · free"}
+            {status === "free" ? (
+              <>
+                <Ticket size={16} />
+                Book this slot <span className="font-medium opacity-80">· {cost} XP</span>
+              </>
+            ) : (
+              <>
+                <Clock3 size={16} />
+                Join waitlist <span className="font-medium opacity-80">· free</span>
+              </>
+            )}
           </button>
         )}
       </div>
