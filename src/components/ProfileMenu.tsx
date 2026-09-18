@@ -39,14 +39,14 @@ export default function ProfileMenu({ onOpenBookings }: { onOpenBookings: () => 
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-lg border border-border bg-surface shadow-[0_16px_40px_-12px_rgba(0,0,0,0.6)]">
+        <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-surface shadow-[0_16px_40px_-12px_rgba(0,0,0,0.6)]">
           <div className="flex items-center gap-2.5 border-b border-border/60 px-3.5 py-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
               Y
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">You</p>
-              <p className="truncate text-xs text-muted">Playhouse member</p>
+              <p className="truncate text-xs text-muted">Players&apos; Union member</p>
             </div>
           </div>
 

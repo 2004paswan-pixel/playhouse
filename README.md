@@ -1,4 +1,4 @@
-# Playhouse
+# Players' Union
 
 Amenity slot booking for Masters' Union — pick an amenity (Gym, Music Rooms,
 Dance Room, Pickleball Court), see a 30-minute slot calendar, and book or join

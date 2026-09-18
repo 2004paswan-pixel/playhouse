@@ -13,7 +13,7 @@ import { TimeSlot } from "./types";
 import { todayISO } from "./date-utils";
 
 export const CURRENT_USER = "You";
-const STORAGE_KEY = "playhouse-state-v2";
+const STORAGE_KEY = "players-union-state-v1";
 const STARTING_XP = 100;
 
 // Slots are stored per amenity *and* day, keyed `${amenityId}::${dateISO}`,

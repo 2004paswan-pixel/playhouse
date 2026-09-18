@@ -18,9 +18,9 @@ export default function Header() {
         <Link href="/" className="flex min-w-0 shrink items-center">
           <Image
             src="/logo.png"
-            alt="Playhouse"
-            width={983}
-            height={240}
+            alt="Players' Union"
+            width={1324}
+            height={304}
             priority
             className="h-7 w-auto shrink-0 sm:h-11"
           />

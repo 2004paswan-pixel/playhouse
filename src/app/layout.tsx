@@ -3,7 +3,7 @@ import "./globals.css";
 import { BookingsProvider } from "@/lib/bookings-context";
 
 export const metadata: Metadata = {
-  title: "Playhouse",
+  title: "Players' Union",
   description: "Amenity slot booking for Masters' Union.",
   icons: {
     icon: "/favicon-icon.png",
