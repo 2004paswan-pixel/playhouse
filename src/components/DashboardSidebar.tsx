@@ -9,12 +9,12 @@ import XpRing from "./XpRing";
 import MyBookingsPanel from "./MyBookingsPanel";
 import XPHistoryPanel from "./XPHistoryPanel";
 
-const VISIBLE_UPCOMING = 3;
+const VISIBLE_UPCOMING = 5;
 
 // Desktop-only dashboard shown to the right of the amenities grid: a live
 // XP ring (drains/refills as bookings cost or refund XP, tap to see the
 // full history) and a separate, compact "My bookings" card capped to the
-// next 3 upcoming bookings, with "Show all" opening the full panel. Cards
+// next 5 upcoming bookings, with "Show all" opening the full panel. Cards
 // size to their own content rather than stretching to fill the column, so
 // there's no empty bordered box when there isn't much to show. Hidden below
 // `lg` — mobile keeps the profile menu's "My bookings" panel instead.
@@ -37,17 +37,14 @@ export default function DashboardSidebar() {
       >
         <div className="relative flex items-center justify-center">
           <XpRing value={xp} max={STARTING_XP} />
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold leading-none text-accent">{xp}</span>
-            <span className="mt-1.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-accent/70">
-              <Image src="/xp-token.png" alt="XP" width={28} height={28} className="h-3.5 w-3.5 shrink-0" />
-              left
-            </span>
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <Image src="/xp-token.png" alt="XP" width={96} height={96} className="h-[5.5rem] w-[5.5rem] drop-shadow-[0_2px_10px_rgba(215,251,61,0.35)]" />
           </div>
         </div>
         <div>
+          <p className="text-lg font-bold leading-tight text-accent">{xp} XP left</p>
           <p className="text-xs text-muted">
-            {used} of {STARTING_XP} XP used
+            {used} of {STARTING_XP} used
           </p>
           <p className="mt-0.5 text-[11px] font-medium text-accent/80 opacity-0 transition-opacity group-hover:opacity-100">
             View history
@@ -66,7 +63,7 @@ export default function DashboardSidebar() {
         ) : visibleUpcoming.length === 0 ? (
           <p className="text-sm text-muted">Nothing upcoming.</p>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="scroll-list flex max-h-[22rem] flex-col gap-2 overflow-y-auto pr-0.5">
             {visibleUpcoming.map((b) => (
               <li
                 key={b.slot.id + b.amenityId}
