@@ -45,17 +45,22 @@ export default function ScannerButton() {
 
   return (
     <>
-      <button
-        onClick={() => {
-          setError(null);
-          setOpen(true);
-        }}
-        aria-label="Scan to check in"
-        className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center justify-center rounded-full border border-accent/60 bg-accent text-accent-foreground shadow-[0_8px_24px_-6px_rgba(215,251,61,0.55)] transition-transform active:scale-95 sm:hidden"
-        style={{ height: 52, width: 52 }}
-      >
-        <Scan size={22} />
-      </button>
+      <div className="fixed bottom-5 right-5 z-40 sm:hidden" style={{ height: 54, width: 54 }}>
+        {/* lively pulsing glow ring, purely decorative */}
+        <span className="absolute inset-0 animate-ping rounded-full bg-accent/50 [animation-duration:2.2s]" />
+        <span className="absolute -inset-1.5 rounded-full bg-accent/20 blur-md" />
+
+        <button
+          onClick={() => {
+            setError(null);
+            setOpen(true);
+          }}
+          aria-label="Scan to check in"
+          className="relative flex h-full w-full items-center justify-center rounded-full border border-white/25 bg-gradient-to-br from-accent/80 via-emerald-400/75 to-cyan-400/70 text-black backdrop-blur-md shadow-[0_10px_28px_-6px_rgba(215,251,61,0.6)] transition-transform active:scale-90"
+        >
+          <Scan size={23} strokeWidth={2.4} />
+        </button>
+      </div>
 
       {open && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black sm:hidden">

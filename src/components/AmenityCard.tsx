@@ -27,7 +27,7 @@ export default function AmenityCard({ amenity }: { amenity: Amenity }) {
   return (
     <Link
       href={`/amenities/${amenity.id}`}
-      className="group relative flex h-full min-h-0 w-full flex-col justify-end overflow-hidden rounded-xl border border-border bg-surface shadow-md transition-all duration-300 ease-out hover:-translate-y-1 hover:border-accent/70 hover:shadow-[0_20px_45px_-15px_rgba(0,0,0,0.65)]"
+      className="group relative flex h-full min-h-0 w-full flex-col justify-end overflow-hidden rounded-xl border border-border bg-surface shadow-[0_10px_28px_-12px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out active:scale-[0.97] active:border-accent/60 active:shadow-[0_20px_45px_-15px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:border-accent/70 hover:shadow-[0_20px_45px_-15px_rgba(0,0,0,0.65)]"
     >
       {amenity.image ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -50,7 +50,7 @@ export default function AmenityCard({ amenity }: { amenity: Amenity }) {
       {/* base vignette */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-transparent" />
       {/* accent glow that fades in on hover */}
-      <div className="absolute inset-0 bg-gradient-to-t from-accent/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="absolute inset-0 bg-gradient-to-t from-accent/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-active:opacity-100 group-hover:opacity-100" />
       {/* inner ring for a bit of polish */}
       <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/5" />
 
