@@ -391,7 +391,7 @@ function SlotDetail({
             </button>
             <button
               onClick={handleBook}
-              className="flex flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-emerald-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(215,251,61,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(215,251,61,0.7)] hover:brightness-105"
+              className="flex flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-amber-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(255,214,10,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(255,214,10,0.7)] hover:brightness-105"
             >
               <Check size={16} />
               Confirm · {cost} XP
@@ -400,7 +400,7 @@ function SlotDetail({
         ) : (
           <button
             onClick={handlePrimaryClick}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-emerald-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(215,251,61,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(215,251,61,0.7)] hover:brightness-105"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-accent to-amber-400 py-3 text-sm font-bold text-accent-foreground shadow-[0_10px_28px_-8px_rgba(255,214,10,0.55)] transition-all active:scale-[0.97] hover:shadow-[0_14px_34px_-8px_rgba(255,214,10,0.7)] hover:brightness-105"
           >
             {status === "free" ? (
               <>

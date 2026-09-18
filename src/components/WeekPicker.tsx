@@ -27,7 +27,7 @@ export default function WeekPicker({
             onClick={() => onSelect(iso)}
             className={`flex flex-col items-center justify-center gap-0.5 rounded-lg border py-1.5 text-center transition-all sm:py-2 ${
               active
-                ? "border-accent bg-accent/15 text-accent shadow-[0_0_16px_-4px_rgba(215,251,61,0.5)]"
+                ? "border-accent bg-accent/15 text-accent shadow-[0_0_16px_-4px_rgba(255,214,10,0.5)]"
                 : past
                   ? "cursor-not-allowed border-border/40 text-muted/40"
                   : "border-border/70 text-muted hover:-translate-y-0.5 hover:border-accent/50 hover:text-foreground active:scale-95"

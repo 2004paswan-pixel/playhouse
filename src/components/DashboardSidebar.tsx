@@ -38,7 +38,7 @@ export default function DashboardSidebar() {
         <div className="relative flex items-center justify-center">
           <XpRing value={xp} max={STARTING_XP} />
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <Image src="/xp-token.png" alt="XP" width={96} height={96} className="h-[5.5rem] w-[5.5rem] drop-shadow-[0_2px_10px_rgba(215,251,61,0.35)]" />
+            <Image src="/xp-token.png" alt="XP" width={96} height={96} className="h-[5.5rem] w-[5.5rem] drop-shadow-[0_2px_10px_rgba(255,214,10,0.35)]" />
           </div>
         </div>
         <div>

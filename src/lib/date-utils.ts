@@ -49,6 +49,14 @@ export function isPastDate(iso: string, todayIso: string = todayISO()): boolean 
   return iso < todayIso;
 }
 
+/** `iso` shifted by `days` (negative goes backward). */
+export function addDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + days);
+  return toISODate(date);
+}
+
 export function formatFullDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   const date = new Date(y, m - 1, d);

@@ -56,7 +56,7 @@ export default function ScannerButton() {
             setOpen(true);
           }}
           aria-label="Scan to check in"
-          className="relative flex h-full w-full items-center justify-center rounded-full border border-white/25 bg-gradient-to-br from-accent/80 via-emerald-400/75 to-cyan-400/70 text-black backdrop-blur-md shadow-[0_10px_28px_-6px_rgba(215,251,61,0.6)] transition-transform active:scale-90"
+          className="relative flex h-full w-full items-center justify-center rounded-full border border-white/25 bg-gradient-to-br from-accent/80 via-amber-400/75 to-orange-400/70 text-black backdrop-blur-md shadow-[0_10px_28px_-6px_rgba(255,214,10,0.6)] transition-transform active:scale-90"
         >
           <Scan size={23} strokeWidth={2.4} />
         </button>

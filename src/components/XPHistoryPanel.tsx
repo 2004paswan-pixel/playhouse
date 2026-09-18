@@ -43,7 +43,7 @@ export default function XPHistoryPanel({ onClose }: { onClose: () => void }) {
                 <div className="flex min-w-0 items-center gap-2.5">
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                      tx.delta > 0 ? "bg-emerald-400/15 text-emerald-400" : "bg-danger/15 text-danger"
+                      tx.delta > 0 ? "bg-accent/15 text-accent" : "bg-danger/15 text-danger"
                     }`}
                   >
                     {tx.delta > 0 ? <Plus size={13} /> : <Minus size={13} />}
@@ -59,7 +59,7 @@ export default function XPHistoryPanel({ onClose }: { onClose: () => void }) {
                 </div>
                 <span
                   className={`shrink-0 text-sm font-semibold ${
-                    tx.delta > 0 ? "text-emerald-400" : "text-danger"
+                    tx.delta > 0 ? "text-accent" : "text-danger"
                   }`}
                 >
                   {tx.delta > 0 ? "+" : ""}

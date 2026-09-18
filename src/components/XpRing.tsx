@@ -38,7 +38,7 @@ export default function XpRing({ value, max, size = 132, strokeWidth = 10 }: XpR
         strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={offset}
-        style={{ filter: "drop-shadow(0 0 6px rgba(215,251,61,0.55))" }}
+        style={{ filter: "drop-shadow(0 0 6px rgba(255,214,10,0.55))" }}
         className="text-accent transition-[stroke-dashoffset] duration-700 ease-out"
       />
     </svg>

@@ -8,12 +8,16 @@ import {
   useState,
   ReactNode,
 } from "react";
-import { AMENITIES, getSlotsForAmenity, xpCostFor } from "./amenities-data";
+import { AMENITIES, getSlotsForAmenity, xpCostFor, isPeak } from "./amenities-data";
 import { TimeSlot, XpTransaction } from "./types";
-import { todayISO } from "./date-utils";
+import { addDays, todayISO } from "./date-utils";
 
 export const CURRENT_USER = "You";
-const STORAGE_KEY = "players-union-state-v1";
+// Demo build: seeded with fake bookings/history for showing the UI, so this
+// is bumped past any real localStorage left over from earlier testing. Swap
+// back to an empty `fresh` state (see buildDemoSeed below) once the demo is
+// no longer needed.
+const STORAGE_KEY = "players-union-state-demo-v1";
 export const STARTING_XP = 100;
 const MAX_HISTORY = 200;
 
@@ -31,12 +35,69 @@ interface PersistedState {
   xpHistory: XpTransaction[];
 }
 
+/** First slot on `date` still under capacity, in or out of a peak window as asked. */
+function pickOpenSlot(amenityId: string, date: string, wantPeak: boolean): TimeSlot | undefined {
+  return getSlotsForAmenity(amenityId, date).find(
+    (s) => isPeak(s.start) === wantPeak && s.bookings.filter((b) => b.status === "confirmed").length < s.capacity
+  );
+}
+
+// Demo seed: a couple of confirmed Gym bookings (so the XP math is exact)
+// plus a few waitlisted bookings on other amenities purely for visual
+// variety in "My bookings" — waitlisting is free, so it doesn't touch the
+// balance. Dates are computed relative to "today" so it always looks live.
+function buildDemoSeed(): PersistedState {
+  const today = todayISO();
+  const d1 = addDays(today, 1);
+  const d2 = addDays(today, 2);
+  const d3 = addDays(today, 3);
+  const d4 = addDays(today, 4);
+  const now = Date.now();
+  const hour = 60 * 60 * 1000;
+
+  const gym = AMENITIES.find((a) => a.id === "gym")!;
+  const gymSlot1 = pickOpenSlot("gym", d1, true) ?? getSlotsForAmenity("gym", d1)[0];
+  const gymSlot2 = pickOpenSlot("gym", d3, true) ?? getSlotsForAmenity("gym", d3)[0];
+  const cost1 = xpCostFor(gym, gymSlot1.start);
+  const cost2 = xpCostFor(gym, gymSlot2.start);
+
+  const slotsByKey: SlotsByKey = {};
+  function addConfirmed(amenityId: string, date: string, slot: TimeSlot) {
+    const key = keyOf(amenityId, date);
+    const slots = slotsByKey[key] ?? getSlotsForAmenity(amenityId, date);
+    slotsByKey[key] = slots.map((s) =>
+      s.id === slot.id ? { ...s, bookings: [...s.bookings, { name: CURRENT_USER, status: "confirmed" as const }] } : s
+    );
+  }
+  function addWaiting(amenityId: string, date: string, start: string) {
+    const key = keyOf(amenityId, date);
+    const slots = slotsByKey[key] ?? getSlotsForAmenity(amenityId, date);
+    slotsByKey[key] = slots.map((s) =>
+      s.start === start ? { ...s, bookings: [...s.bookings, { name: CURRENT_USER, status: "waiting" as const }] } : s
+    );
+  }
+
+  addConfirmed("gym", d1, gymSlot1);
+  addConfirmed("gym", d3, gymSlot2);
+  addWaiting("music-room-1", d1, "11:00");
+  addWaiting("pickleball-court", d2, "16:00");
+  addWaiting("dance-room", d4, "12:00");
+
+  return {
+    xp: STARTING_XP - cost1 - cost2,
+    xpHistory: [
+      { id: "demo-gym-2", amenityName: "Gym", date: d3, start: gymSlot2.start, delta: -cost2, reason: "booked", at: now - 2 * hour },
+      { id: "demo-gym-1", amenityName: "Gym", date: d1, start: gymSlot1.start, delta: -cost1, reason: "booked", at: now - 5 * hour },
+    ],
+    slotsByKey,
+  };
+}
+
 function loadInitial(): PersistedState {
-  const fresh: PersistedState = { slotsByKey: {}, xp: STARTING_XP, xpHistory: [] };
-  if (typeof window === "undefined") return fresh;
+  if (typeof window === "undefined") return { slotsByKey: {}, xp: STARTING_XP, xpHistory: [] };
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return fresh;
+    if (!raw) return buildDemoSeed();
     const saved = JSON.parse(raw) as Partial<PersistedState>;
     return {
       slotsByKey: saved.slotsByKey ?? {},
@@ -44,7 +105,7 @@ function loadInitial(): PersistedState {
       xpHistory: Array.isArray(saved.xpHistory) ? saved.xpHistory : [],
     };
   } catch {
-    return fresh;
+    return buildDemoSeed();
   }
 }
 
